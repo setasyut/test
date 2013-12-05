@@ -1,0 +1,502 @@
+--6
+--成長・後退・現状維持
+CREATE TABLE Sales
+(year INTEGER NOT NULL , 
+ sale INTEGER NOT NULL ,
+ PRIMARY KEY (year));
+
+INSERT INTO Sales VALUES (1990, 50);
+INSERT INTO Sales VALUES (1991, 51);
+INSERT INTO Sales VALUES (1992, 52);
+INSERT INTO Sales VALUES (1993, 52);
+INSERT INTO Sales VALUES (1994, 50);
+INSERT INTO Sales VALUES (1995, 50);
+INSERT INTO Sales VALUES (1996, 49);
+INSERT INTO Sales VALUES (1997, 55);
+
+--時系列に歯抜けがある場合：直近と比較
+CREATE TABLE Sales2
+(year INTEGER NOT NULL , 
+ sale INTEGER NOT NULL , 
+ PRIMARY KEY (year));
+
+INSERT INTO Sales2 VALUES (1990, 50);
+INSERT INTO Sales2 VALUES (1992, 50);
+INSERT INTO Sales2 VALUES (1993, 52);
+INSERT INTO Sales2 VALUES (1994, 55);
+INSERT INTO Sales2 VALUES (1997, 55);
+
+--移動累計と移動平均
+CREATE TABLE Accounts
+(prc_date DATE NOT NULL , 
+ prc_amt  INTEGER NOT NULL , 
+ PRIMARY KEY (prc_date)) ;
+
+INSERT INTO Accounts VALUES ('2006-10-26',  12000 );
+INSERT INTO Accounts VALUES ('2006-10-28',   2500 );
+INSERT INTO Accounts VALUES ('2006-10-31', -15000 );
+INSERT INTO Accounts VALUES ('2006-11-03',  34000 );
+INSERT INTO Accounts VALUES ('2006-11-04',  -5000 );
+INSERT INTO Accounts VALUES ('2006-11-06',   7200 );
+INSERT INTO Accounts VALUES ('2006-11-11',  11000 );
+
+--オーバーラップする期間を調べる
+CREATE TABLE Reservations
+(reserver    VARCHAR(30) PRIMARY KEY,
+ start_date  DATE  NOT NULL,
+ end_date    DATE  NOT NULL);
+
+INSERT INTO Reservations VALUES('木村', '2006-10-26', '2006-10-27');
+INSERT INTO Reservations VALUES('荒木', '2006-10-28', '2006-10-31');
+INSERT INTO Reservations VALUES('堀',   '2006-10-31', '2006-11-01');
+INSERT INTO Reservations VALUES('山本', '2006-11-03', '2006-11-04');
+INSERT INTO Reservations VALUES('内田', '2006-11-03', '2006-11-05');
+INSERT INTO Reservations VALUES('水谷', '2006-11-06', '2006-11-06');
+
+--山本氏の投宿日が4日の場合
+DELETE FROM Reservations WHERE reserver = '山本';
+INSERT INTO Reservations VALUES('山本', '2006-11-04', '2006-11-04');
+
+
+--7
+/* テーブル同士のコンペア　集合の相等性チェック */
+CREATE TABLE Tbl_A
+ (keycol  CHAR(1) PRIMARY KEY,
+  col_1   INTEGER , 
+  col_2   INTEGER, 
+  col_3   INTEGER);
+
+CREATE TABLE Tbl_B
+ (keycol  CHAR(1) PRIMARY KEY,
+  col_1   INTEGER, 
+  col_2   INTEGER, 
+  col_3   INTEGER);
+
+/* 等しいテーブル同士のケース */
+DELETE FROM Tbl_A;
+INSERT INTO Tbl_A VALUES('A', 2, 3, 4);
+INSERT INTO Tbl_A VALUES('B', 0, 7, 9);
+INSERT INTO Tbl_A VALUES('C', 5, 1, 6);
+
+DELETE FROM Tbl_B;
+INSERT INTO Tbl_B VALUES('A', 2, 3, 4);
+INSERT INTO Tbl_B VALUES('B', 0, 7, 9);
+INSERT INTO Tbl_B VALUES('C', 5, 1, 6);
+
+
+/* 「B」の行が相違するケース */
+DELETE FROM Tbl_A;
+INSERT INTO Tbl_A VALUES('A', 2, 3, 4);
+INSERT INTO Tbl_A VALUES('B', 0, 7, 9);
+INSERT INTO Tbl_A VALUES('C', 5, 1, 6);
+
+DELETE FROM Tbl_B;
+INSERT INTO Tbl_B VALUES('A', 2, 3, 4);
+INSERT INTO Tbl_B VALUES('B', 0, 7, 8);
+INSERT INTO Tbl_B VALUES('C', 5, 1, 6);
+
+
+/* NULLを含むケース（等しい） */
+DELETE FROM Tbl_A;
+INSERT INTO Tbl_A VALUES('A', NULL, 3, 4);
+INSERT INTO Tbl_A VALUES('B', 0, 7, 9);
+INSERT INTO Tbl_A VALUES('C', NULL, NULL, NULL);
+
+DELETE FROM Tbl_B;
+INSERT INTO Tbl_B VALUES('A', NULL, 3, 4);
+INSERT INTO Tbl_B VALUES('B', 0, 7, 9);
+INSERT INTO Tbl_B VALUES('C', NULL, NULL, NULL);
+
+
+/* NULLを含むケース（「C」の行が異なる） */
+DELETE FROM Tbl_A;
+INSERT INTO Tbl_A VALUES('A', NULL, 3, 4);
+INSERT INTO Tbl_A VALUES('B', 0, 7, 9);
+INSERT INTO Tbl_A VALUES('C', NULL, NULL, NULL);
+
+DELETE FROM Tbl_B;
+INSERT INTO Tbl_B VALUES('A', NULL, 3, 4);
+INSERT INTO Tbl_B VALUES('B', 0, 7, 9);
+INSERT INTO Tbl_B VALUES('C', 0, NULL, NULL);
+
+
+/* 3. 差集合で関係除算を表現する */
+CREATE TABLE Skills 
+(skill VARCHAR(32),
+ PRIMARY KEY(skill));
+
+CREATE TABLE EmpSkills 
+(emp   VARCHAR(32), 
+ skill VARCHAR(32),
+ PRIMARY KEY(emp, skill));
+
+INSERT INTO Skills VALUES('Oracle');
+INSERT INTO Skills VALUES('UNIX');
+INSERT INTO Skills VALUES('Java');
+
+INSERT INTO EmpSkills VALUES('相田', 'Oracle');
+INSERT INTO EmpSkills VALUES('相田', 'UNIX');
+INSERT INTO EmpSkills VALUES('相田', 'Java');
+INSERT INTO EmpSkills VALUES('相田', 'C#');
+INSERT INTO EmpSkills VALUES('神崎', 'Oracle');
+INSERT INTO EmpSkills VALUES('神崎', 'UNIX');
+INSERT INTO EmpSkills VALUES('神崎', 'Java');
+INSERT INTO EmpSkills VALUES('平井', 'UNIX');
+INSERT INTO EmpSkills VALUES('平井', 'Oracle');
+INSERT INTO EmpSkills VALUES('平井', 'PHP');
+INSERT INTO EmpSkills VALUES('平井', 'Perl');
+INSERT INTO EmpSkills VALUES('平井', 'C++');
+INSERT INTO EmpSkills VALUES('若田部', 'Perl');
+INSERT INTO EmpSkills VALUES('渡来', 'Oracle');
+
+/* 4. 等しい部分集合を見つける */
+CREATE TABLE SupParts
+(sup  CHAR(32) NOT NULL,
+ part CHAR(32) NOT NULL,
+ PRIMARY KEY(sup, part));
+
+INSERT INTO SupParts VALUES('A',  'ボルト');
+INSERT INTO SupParts VALUES('A',  'ナット');
+INSERT INTO SupParts VALUES('A',  'パイプ');
+INSERT INTO SupParts VALUES('B',  'ボルト');
+INSERT INTO SupParts VALUES('B',  'パイプ');
+INSERT INTO SupParts VALUES('C',  'ボルト');
+INSERT INTO SupParts VALUES('C',  'ナット');
+INSERT INTO SupParts VALUES('C',  'パイプ');
+INSERT INTO SupParts VALUES('D',  'ボルト');
+INSERT INTO SupParts VALUES('D',  'パイプ');
+INSERT INTO SupParts VALUES('E',  'ヒューズ');
+INSERT INTO SupParts VALUES('E',  'ナット');
+INSERT INTO SupParts VALUES('E',  'パイプ');
+INSERT INTO SupParts VALUES('F',  'ヒューズ');
+
+/* 5. 重複行を削除する高速なクエリ
+PostgreSQLでは「with oids」をCREATE TABLE文の最後に追加すること */
+CREATE TABLE Products
+(name  CHAR(16),
+ price INTEGER);
+
+INSERT INTO Products VALUES('りんご',  50);
+INSERT INTO Products VALUES('みかん', 100);
+INSERT INTO Products VALUES('みかん', 100);
+INSERT INTO Products VALUES('みかん', 100);
+INSERT INTO Products VALUES('バナナ',  80);
+
+--8
+/* テーブルに存在「しない」データを探す */
+CREATE TABLE Meetings
+(meeting CHAR(32) NOT NULL,
+ person  CHAR(32) NOT NULL,
+ PRIMARY KEY (meeting, person));
+
+INSERT INTO Meetings VALUES('第１回', '伊藤');
+INSERT INTO Meetings VALUES('第１回', '水島');
+INSERT INTO Meetings VALUES('第１回', '坂東');
+INSERT INTO Meetings VALUES('第２回', '伊藤');
+INSERT INTO Meetings VALUES('第２回', '宮田');
+INSERT INTO Meetings VALUES('第３回', '坂東');
+INSERT INTO Meetings VALUES('第３回', '水島');
+INSERT INTO Meetings VALUES('第３回', '宮田');
+
+/* 全称量化　その１：肯定⇔二重否定の変換に慣れよう */
+CREATE TABLE TestScores
+(student_id INTEGER,
+ subject    VARCHAR(32) ,
+ score      INTEGER,
+  PRIMARY KEY(student_id, subject));
+
+INSERT INTO TestScores VALUES(100, '算数',100);
+INSERT INTO TestScores VALUES(100, '国語',80);
+INSERT INTO TestScores VALUES(100, '理科',80);
+INSERT INTO TestScores VALUES(200, '算数',80);
+INSERT INTO TestScores VALUES(200, '国語',95);
+INSERT INTO TestScores VALUES(300, '算数',40);
+INSERT INTO TestScores VALUES(300, '国語',90);
+INSERT INTO TestScores VALUES(300, '社会',55);
+INSERT INTO TestScores VALUES(400, '算数',80);
+
+/* 全称量化　その２：集合VS 述語――凄いのはどっちだ？ */
+CREATE TABLE Projects
+(project_id VARCHAR(32),
+ step_nbr   INTEGER ,
+ status     VARCHAR(32),
+  PRIMARY KEY(project_id, step_nbr));
+
+INSERT INTO Projects VALUES('AA100', 0, '完了');
+INSERT INTO Projects VALUES('AA100', 1, '待機');
+INSERT INTO Projects VALUES('AA100', 2, '待機');
+INSERT INTO Projects VALUES('B200',  0, '待機');
+INSERT INTO Projects VALUES('B200',  1, '待機');
+INSERT INTO Projects VALUES('CS300', 0, '完了');
+INSERT INTO Projects VALUES('CS300', 1, '完了');
+INSERT INTO Projects VALUES('CS300', 2, '待機');
+INSERT INTO Projects VALUES('CS300', 3, '待機');
+INSERT INTO Projects VALUES('DY400', 0, '完了');
+INSERT INTO Projects VALUES('DY400', 1, '完了');
+INSERT INTO Projects VALUES('DY400', 2, '完了');
+
+/* 列に対する量化：オール１の行を探せ */
+CREATE TABLE ArrayTbl
+ (keycol CHAR(1) PRIMARY KEY,
+  col1  INTEGER,
+  col2  INTEGER,
+  col3  INTEGER,
+  col4  INTEGER,
+  col5  INTEGER,
+  col6  INTEGER,
+  col7  INTEGER,
+  col8  INTEGER,
+  col9  INTEGER,
+  col10 INTEGER);
+
+--オールNULL
+INSERT INTO ArrayTbl VALUES('A', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO ArrayTbl VALUES('B', 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+--オール1
+INSERT INTO ArrayTbl VALUES('C', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
+--少なくとも一つは9
+INSERT INTO ArrayTbl VALUES('D', NULL, NULL, 9, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO ArrayTbl VALUES('E', NULL, 3, NULL, 1, 9, NULL, NULL, 9, NULL, NULL);
+
+
+--9
+--連番を作ろう
+CREATE TABLE Digits
+ (digit INTEGER PRIMARY KEY); 
+
+INSERT INTO Digits VALUES (0);
+INSERT INTO Digits VALUES (1);
+INSERT INTO Digits VALUES (2);
+INSERT INTO Digits VALUES (3);
+INSERT INTO Digits VALUES (4);
+INSERT INTO Digits VALUES (5);
+INSERT INTO Digits VALUES (6);
+INSERT INTO Digits VALUES (7);
+INSERT INTO Digits VALUES (8);
+INSERT INTO Digits VALUES (9);
+
+--欠番を全部求める
+CREATE TABLE SeqTbl
+ (seq INTEGER PRIMARY KEY); 
+
+INSERT INTO SeqTbl VALUES (1);
+INSERT INTO SeqTbl VALUES (2);
+INSERT INTO SeqTbl VALUES (4);
+INSERT INTO SeqTbl VALUES (5);
+INSERT INTO SeqTbl VALUES (6);
+INSERT INTO SeqTbl VALUES (7);
+INSERT INTO SeqTbl VALUES (8);
+INSERT INTO SeqTbl VALUES (11);
+INSERT INTO SeqTbl VALUES (12);
+
+--3人なんですけど、座れますか？
+CREATE TABLE Seats
+(seat   INTEGER NOT NULL  PRIMARY KEY,
+ status CHAR(2) NOT NULL
+ CHECK (status IN ('空', '占')) ); 
+
+INSERT INTO Seats VALUES (1,  '占');
+INSERT INTO Seats VALUES (2,  '占');
+INSERT INTO Seats VALUES (3,  '空');
+INSERT INTO Seats VALUES (4,  '空');
+INSERT INTO Seats VALUES (5,  '空');
+INSERT INTO Seats VALUES (6,  '占');
+INSERT INTO Seats VALUES (7,  '空');
+INSERT INTO Seats VALUES (8,  '空');
+INSERT INTO Seats VALUES (9,  '空');
+INSERT INTO Seats VALUES (10, '空');
+INSERT INTO Seats VALUES (11, '空');
+INSERT INTO Seats VALUES (12, '占');
+INSERT INTO Seats VALUES (13, '占');
+INSERT INTO Seats VALUES (14, '空');
+INSERT INTO Seats VALUES (15, '空');
+
+--折り返しも考慮
+CREATE TABLE Seats2
+ ( seat   INTEGER NOT NULL  PRIMARY KEY,
+   row_id CHAR(1) NOT NULL,
+   status CHAR(2) NOT NULL
+     CHECK (status IN ('空', '占')) ); 
+
+INSERT INTO Seats2 VALUES (1, 'A', '占');
+INSERT INTO Seats2 VALUES (2, 'A', '占');
+INSERT INTO Seats2 VALUES (3, 'A', '空');
+INSERT INTO Seats2 VALUES (4, 'A', '空');
+INSERT INTO Seats2 VALUES (5, 'A', '空');
+INSERT INTO Seats2 VALUES (6, 'B', '占');
+INSERT INTO Seats2 VALUES (7, 'B', '占');
+INSERT INTO Seats2 VALUES (8, 'B', '空');
+INSERT INTO Seats2 VALUES (9, 'B', '空');
+INSERT INTO Seats2 VALUES (10,'B', '空');
+INSERT INTO Seats2 VALUES (11,'C', '空');
+INSERT INTO Seats2 VALUES (12,'C', '空');
+INSERT INTO Seats2 VALUES (13,'C', '空');
+INSERT INTO Seats2 VALUES (14,'C', '占');
+INSERT INTO Seats2 VALUES (15,'C', '空');
+
+--最大何人まで座れますか？
+CREATE TABLE Seats3
+ ( seat   INTEGER NOT NULL  PRIMARY KEY,
+   status CHAR(2) NOT NULL
+     CHECK (status IN ('空', '占')) ); 
+
+INSERT INTO Seats3 VALUES (1,  '占');
+INSERT INTO Seats3 VALUES (2,  '空');
+INSERT INTO Seats3 VALUES (3,  '空');
+INSERT INTO Seats3 VALUES (4,  '空');
+INSERT INTO Seats3 VALUES (5,  '空');
+INSERT INTO Seats3 VALUES (6,  '占');
+INSERT INTO Seats3 VALUES (7,  '空');
+INSERT INTO Seats3 VALUES (8,  '占');
+INSERT INTO Seats3 VALUES (9,  '空');
+INSERT INTO Seats3 VALUES (10, '空');
+
+--単調増加と単調減少
+CREATE TABLE MyStock
+ (deal_date  DATE PRIMARY KEY,
+  price      INTEGER ); 
+
+INSERT INTO MyStock VALUES ('2007-01-06', 1000);
+INSERT INTO MyStock VALUES ('2007-01-08', 1050);
+INSERT INTO MyStock VALUES ('2007-01-09', 1050);
+INSERT INTO MyStock VALUES ('2007-01-12', 900);
+INSERT INTO MyStock VALUES ('2007-01-13', 880);
+INSERT INTO MyStock VALUES ('2007-01-14', 870);
+INSERT INTO MyStock VALUES ('2007-01-16', 920);
+INSERT INTO MyStock VALUES ('2007-01-17', 1000);
+
+
+--10
+--各隊、総員点呼！
+CREATE TABLE Teams
+(member  CHAR(12) NOT NULL PRIMARY KEY,
+ team_id INTEGER  NOT NULL,
+ status  CHAR(8)  NOT NULL);
+
+INSERT INTO Teams VALUES('ジョー',   1, '待機');
+INSERT INTO Teams VALUES('ケン',     1, '出動中');
+INSERT INTO Teams VALUES('ミック',   1, '待機');
+INSERT INTO Teams VALUES('カレン',   2, '出動中');
+INSERT INTO Teams VALUES('キース',   2, '休暇');
+INSERT INTO Teams VALUES('ジャン',   3, '待機');
+INSERT INTO Teams VALUES('ハート',   3, '待機');
+INSERT INTO Teams VALUES('ディック', 3, '待機');
+INSERT INTO Teams VALUES('ベス',     4, '待機');
+INSERT INTO Teams VALUES('アレン',   5, '出動中');
+INSERT INTO Teams VALUES('ロバート', 5, '休暇');
+INSERT INTO Teams VALUES('ケーガン', 5, '待機');
+
+--一意集合と多重集合
+CREATE TABLE Materials
+(center         CHAR(12) NOT NULL,
+ receive_date   DATE     NOT NULL,
+ material       CHAR(12) NOT NULL,
+ PRIMARY KEY(center, receive_date));
+
+INSERT INTO Materials VALUES('東京'	,'2007-4-01',	'錫');
+INSERT INTO Materials VALUES('東京'	,'2007-4-12',	'亜鉛');
+INSERT INTO Materials VALUES('東京'	,'2007-5-17',	'アルミニウム');
+INSERT INTO Materials VALUES('東京'	,'2007-5-20',	'亜鉛');
+INSERT INTO Materials VALUES('大阪'	,'2007-4-20',	'銅');
+INSERT INTO Materials VALUES('大阪'	,'2007-4-22',	'ニッケル');
+INSERT INTO Materials VALUES('大阪'	,'2007-4-29',	'鉛');
+INSERT INTO Materials VALUES('名古屋',	'2007-3-15',	'チタン');
+INSERT INTO Materials VALUES('名古屋',	'2007-4-01',	'炭素鋼');
+INSERT INTO Materials VALUES('名古屋',	'2007-4-24',	'炭素鋼');
+INSERT INTO Materials VALUES('名古屋',	'2007-5-02',	'マグネシウム');
+INSERT INTO Materials VALUES('名古屋',	'2007-5-10',	'チタン');
+INSERT INTO Materials VALUES('福岡'	,'2007-5-10',	'亜鉛');
+INSERT INTO Materials VALUES('福岡'	,'2007-5-28',	'錫');
+
+--欠番を探せ：発展版
+CREATE TABLE SeqTbl
+( seq INTEGER NOT NULL PRIMARY KEY);
+
+--歯抜けなし：開始値が1
+DELETE FROM SeqTbl;
+INSERT INTO SeqTbl VALUES(1);
+INSERT INTO SeqTbl VALUES(2);
+INSERT INTO SeqTbl VALUES(3);
+INSERT INTO SeqTbl VALUES(4);
+INSERT INTO SeqTbl VALUES(5);
+
+--歯抜けあり：開始値が1
+DELETE FROM SeqTbl;
+INSERT INTO SeqTbl VALUES(1);
+INSERT INTO SeqTbl VALUES(2);
+INSERT INTO SeqTbl VALUES(4);
+INSERT INTO SeqTbl VALUES(5);
+INSERT INTO SeqTbl VALUES(8);
+
+--歯抜けなし：開始値が1ではない
+DELETE FROM SeqTbl;
+INSERT INTO SeqTbl VALUES(3);
+INSERT INTO SeqTbl VALUES(4);
+INSERT INTO SeqTbl VALUES(5);
+INSERT INTO SeqTbl VALUES(6);
+INSERT INTO SeqTbl VALUES(7);
+
+--歯抜けあり：開始値が1ではない
+DELETE FROM SeqTbl;
+INSERT INTO SeqTbl VALUES(3);
+INSERT INTO SeqTbl VALUES(4);
+INSERT INTO SeqTbl VALUES(7);
+INSERT INTO SeqTbl VALUES(8);
+INSERT INTO SeqTbl VALUES(10);
+
+--集合にきめ細かな条件を設定する
+CREATE TABLE TestResults
+(student CHAR(12) NOT NULL PRIMARY KEY,
+ class   CHAR(1)  NOT NULL,
+ sex     CHAR(1)  NOT NULL,
+ score   INTEGER  NOT NULL);
+
+INSERT INTO TestResults VALUES('001', 'A', '男', 100);
+INSERT INTO TestResults VALUES('002', 'A', '女', 100);
+INSERT INTO TestResults VALUES('003', 'A', '女',  49);
+INSERT INTO TestResults VALUES('004', 'A', '男',  30);
+INSERT INTO TestResults VALUES('005', 'B', '女', 100);
+INSERT INTO TestResults VALUES('006', 'B', '男',  92);
+INSERT INTO TestResults VALUES('007', 'B', '男',  80);
+INSERT INTO TestResults VALUES('008', 'B', '男',  80);
+INSERT INTO TestResults VALUES('009', 'B', '女',  10);
+INSERT INTO TestResults VALUES('010', 'C', '男',  92);
+INSERT INTO TestResults VALUES('011', 'C', '男',  80);
+INSERT INTO TestResults VALUES('012', 'C', '女',  21);
+INSERT INTO TestResults VALUES('013', 'D', '女', 100);
+INSERT INTO TestResults VALUES('014', 'D', '女',   0);
+INSERT INTO TestResults VALUES('015', 'D', '女',   0);
+
+--2-5
+CREATE TABLE Teams
+(member VARCHAR(32) PRIMARY KEY,
+ team   CHAR(1)     NOT NULL,
+ age    INTEGER     NOT NULL);
+
+INSERT INTO Teams VALUES('大木',	'A',	28);
+INSERT INTO Teams VALUES('逸見',	'A',	19);
+INSERT INTO Teams VALUES('新藤',	'A',	23);
+INSERT INTO Teams VALUES('山田',	'B',	40);
+INSERT INTO Teams VALUES('久本',	'B',	29);
+INSERT INTO Teams VALUES('橋田',	'C',	30);
+INSERT INTO Teams VALUES('野々宮',      'D',	28);
+INSERT INTO Teams VALUES('鬼塚',	'D',	28);
+INSERT INTO Teams VALUES('加藤',	'D',	24);
+INSERT INTO Teams VALUES('新城',	'D',	22);
+
+CREATE TABLE Natural
+(num INTEGER  NOT NULL PRIMARY KEY);
+
+INSERT INTO Natural VALUES(0);
+INSERT INTO Natural VALUES(1);
+INSERT INTO Natural VALUES(2);
+INSERT INTO Natural VALUES(3);
+INSERT INTO Natural VALUES(4);
+INSERT INTO Natural VALUES(5);
+INSERT INTO Natural VALUES(6);
+INSERT INTO Natural VALUES(7);
+INSERT INTO Natural VALUES(8);
+INSERT INTO Natural VALUES(9);
+INSERT INTO Natural VALUES(10);
+
+
